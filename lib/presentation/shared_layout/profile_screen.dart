@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:postreal/business_logic/auth_bloc/auth_bloc.dart';
 import 'package:postreal/constants/presentation_constants.dart';
-import 'package:postreal/constants/routes.dart';
 import 'package:postreal/data/firestore_methods.dart';
 import 'package:postreal/data/models/post.dart';
 import 'package:postreal/data/models/user.dart';
@@ -13,6 +12,8 @@ import 'package:postreal/presentation/shared_layout/edit_profile.dart';
 import 'package:postreal/presentation/widgets/bool_bottom_sheet.dart';
 import 'package:postreal/presentation/widgets/post_bottom_sheet.dart';
 import 'package:postreal/presentation/widgets/stalk_dp_widget.dart';
+import 'package:postreal/presentation/widgets/user_dp.dart';
+import 'package:postreal/presentation/widgets/username_widget.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 
@@ -95,7 +96,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           appBar: AppBar(
             elevation: 0.1,
             backgroundColor: Colors.transparent,
-            title: Text(dataOfProfileOwner['username']),
+            title: UsernameWidget(
+                isVerified: dataOfProfileOwner['isVerified'],
+                username: dataOfProfileOwner['username']),
             centerTitle: false,
             actions: [
               isProfileOwner
@@ -109,8 +112,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (shouldLogout!) {
                             BlocProvider.of<AuthBloc>(navKey.currentContext!)
                                 .add(LogoutClickedEvent());
-                            Navigator.pushReplacementNamed(
-                                navKey.currentContext!, AppRoutes.loginscreen);
                             Fluttertoast.showToast(
                                 msg: "Logged out...",
                                 gravity: ToastGravity.CENTER);
@@ -146,11 +147,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       );
                                     });
                               },
-                              child: CircleAvatar(
+                              child: UserDP(
+                                dpUrl: dataOfProfileOwner['profilePicUrl'],
+                                isVerified: dataOfProfileOwner['isVerified'],
                                 radius: 40,
-                                backgroundColor: Colors.grey,
-                                backgroundImage: NetworkImage(
-                                    dataOfProfileOwner['profilePicUrl']),
                               ),
                             ),
                             Expanded(

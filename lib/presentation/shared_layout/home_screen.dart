@@ -5,13 +5,13 @@ import 'package:postreal/constants/presentation_constants.dart';
 import 'package:postreal/constants/routes.dart';
 import 'package:postreal/data/firestore_methods.dart';
 import 'package:postreal/data/models/user.dart';
-import 'package:postreal/main.dart';
 import 'package:postreal/presentation/shared_layout/feed_screen.dart';
 import 'package:postreal/presentation/shared_layout/notification_screen.dart';
 import 'package:postreal/presentation/shared_layout/profile_screen.dart';
 import 'package:postreal/presentation/shared_layout/search_screen.dart';
 import 'package:postreal/presentation/widgets/bool_bottom_sheet.dart';
 import 'package:postreal/providers/user_provider.dart';
+import 'package:postreal/utils/scroll_to_top.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,6 +24,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _navAt = 0;
   late PageController _pageController;
+  final ScrollController _feedScrollController = ScrollController();
+  final ScrollController _searchFeedScroolController = ScrollController();
 
   @override
   void initState() {
@@ -44,7 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigationTapped(int page) {
-    _pageController.jumpToPage(page);
+    if (_navAt == page) {
+      if (page == 0) {
+        scrollToTop(_feedScrollController);
+      } else if (page == 1) {
+        scrollToTop(_searchFeedScroolController);
+      }
+    } else {
+      _pageController.jumpToPage(page);
+    }
   }
 
   void _onPageChanged(int page) {
@@ -60,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return WillPopScope(
       onWillPop: () async {
         bool? shouldExit = await booleanBottomSheet(
-            context: navKey.currentContext!,
+            context: context,
             titleText: closeAppTitle,
             boolTrueText: "Close PostReal");
 
@@ -75,8 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
         floatingActionButton: _navAt == 3
             ? FloatingActionButton.extended(
                 onPressed: () {
-                  Navigator.pushNamed(
-                      navKey.currentContext!, AppRoutes.addPostScreen);
+                  Navigator.pushNamed(context, AppRoutes.addPostScreen);
                 },
                 label: const Text("Post real"),
                 icon: const Icon(Icons.add_a_photo),
@@ -113,8 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: _pageController,
           onPageChanged: _onPageChanged,
           children: [
-            const FeedScreen(),
-            const SearchScreen(),
+            FeedScreen(feedScrollController: _feedScrollController),
+            SearchScreen(
+                searchFeedScrollController: _searchFeedScroolController),
             const NotificationScreen(),
             ProfileScreen(uIdOfProfileOwner: user.uid),
           ],

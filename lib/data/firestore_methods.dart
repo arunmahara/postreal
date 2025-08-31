@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:khalti_flutter/khalti_flutter.dart';
 import 'package:postreal/data/auth_methods.dart';
 import 'package:postreal/data/models/comment.dart';
 import 'package:postreal/data/models/notification.dart';
@@ -11,6 +12,21 @@ import 'package:uuid/uuid.dart';
 class FirestoreMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthMethods _authMethods = AuthMethods();
+
+  //function to save success payment record for Super User
+  Future<void> savePayment(PaymentSuccessModel successModel) async {
+    await _firestore
+        .collection('users')
+        .doc(_authMethods.auth.currentUser!.uid)
+        .update({'isVerified': true});
+    await _firestore
+        .collection('khalti')
+        .doc(_authMethods.auth.currentUser!.uid)
+        .set({
+      'uid': _authMethods.auth.currentUser!.uid,
+      'khaltiInfo': successModel.toString()
+    });
+  }
 
   //function to get data of a particular post
   Future<Post> getPostData(String postId) async {
@@ -120,6 +136,7 @@ class FirestoreMethods {
         username: user.username.trim(),
         datePublished: DateTime.now(),
         profilePicUrl: user.profilePicUrl,
+        isVerified: user.isVerified,
         postPicUrl: pictureUrl,
         postId: const Uuid().v1(),
       );
@@ -176,6 +193,7 @@ class FirestoreMethods {
               senderId: likerId,
               senderUsername: liker.username,
               senderProfilePic: liker.profilePicUrl,
+              isVerified: liker.isVerified,
               notificationType: "like",
               timeStamp: DateTime.now(),
               postId: postId,
@@ -215,6 +233,7 @@ class FirestoreMethods {
       senderId: stalkerId,
       senderUsername: follower.username,
       senderProfilePic: follower.profilePicUrl,
+      isVerified: follower.isVerified,
       notificationType: "follow",
       timeStamp: DateTime.now(),
     );
@@ -249,12 +268,14 @@ class FirestoreMethods {
       required String posterId,
       required String username,
       required String profilePicUrl,
+      required bool isVerified,
       required String postPicUrl}) async {
     try {
       Comment comment = Comment(
           text: text.trim(),
           commentId: const Uuid().v1(),
           commentatorProfilePicUrl: profilePicUrl,
+          isVerified: isVerified,
           commentatorUsername: username,
           commentatorId: commentatorId,
           dateCommented: DateTime.now());
@@ -272,6 +293,7 @@ class FirestoreMethods {
             senderId: commentatorId,
             senderUsername: username,
             senderProfilePic: profilePicUrl,
+            isVerified: isVerified,
             notificationType: "comment",
             timeStamp: DateTime.now(),
             postId: postId,
